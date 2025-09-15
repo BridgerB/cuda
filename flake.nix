@@ -24,30 +24,25 @@
           src = ./.;
 
           nativeBuildInputs = with pkgs; [
-            cudatoolkit
+            cudaPackages.cuda_nvcc
+            addDriverRunpath
             gcc
           ];
 
           buildInputs = with pkgs; [
-            cudatoolkit
+            cudaPackages.cuda_cudart
             linuxPackages.nvidia_x11
           ];
 
           buildPhase = ''
-            export CUDA_PATH=${pkgs.cudatoolkit}
-            export LD_LIBRARY_PATH=${pkgs.linuxPackages.nvidia_x11}/lib:${pkgs.cudatoolkit}/lib64:$LD_LIBRARY_PATH
+            export CUDA_PATH=${pkgs.cudaPackages.cuda_nvcc}
+            export LD_LIBRARY_PATH=${pkgs.linuxPackages.nvidia_x11}/lib:${pkgs.cudaPackages.cuda_cudart}/lib:$LD_LIBRARY_PATH
 
-            # Create empty static libraries to satisfy nvcc
-            mkdir -p placeholder_libs
-            ar rcs placeholder_libs/libcudadevrt.a
-            ar rcs placeholder_libs/libcudart_static.a
-
-            # Use both the real CUDA lib dir and our placeholder libs
-            CUDA_LIB_DIR=${pkgs.cudatoolkit}/lib
+            # Use the real CUDA lib dir
+            CUDA_LIB_DIR=${pkgs.cudaPackages.cuda_cudart}/lib
 
             nvcc -o hello hello.cu \
               -L"$CUDA_LIB_DIR" \
-              -L./placeholder_libs \
               -lcudart \
               -Wno-deprecated-gpu-targets
           '';
@@ -85,8 +80,8 @@
           ];
 
           shellHook = ''
-            export CUDA_PATH=${pkgs.cudatoolkit}
-            export LD_LIBRARY_PATH=${pkgs.linuxPackages.nvidia_x11}/lib:${pkgs.cudatoolkit}/lib64:$LD_LIBRARY_PATH
+            export CUDA_PATH=${pkgs.cudaPackages.cuda_nvcc}
+            export LD_LIBRARY_PATH=${pkgs.linuxPackages.nvidia_x11}/lib:${pkgs.cudaPackages.cuda_cudart}/lib:$LD_LIBRARY_PATH
           '';
         };
       });
